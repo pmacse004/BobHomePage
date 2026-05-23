@@ -373,6 +373,10 @@
             🔄 Loading...
         </div>
         
+        <button id="refreshBtn" onclick="manualRefresh()" style="display: none; width: 100%; margin-bottom: 15px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+            🔄 Refresh Links
+        </button>
+        
         <div class="add-form" id="addForm" style="display: none;">
             <input type="text" id="linkName" placeholder="Enter link name..." />
             <input type="url" id="linkUrl" placeholder="https://example.com" />
@@ -509,7 +513,7 @@
                         document.getElementById('addForm').style.display = 'flex';
                     } else {
                         updateSyncStatus('View Mode', 'read-only');
-                        document.getElementById('adminLink').style.display = 'block';
+                        document.getElementById('refreshBtn').style.display = 'block';
                     }
                 } else if (response.status === 404) {
                     links = [];
@@ -518,6 +522,7 @@
                         document.getElementById('addForm').style.display = 'flex';
                     } else {
                         updateSyncStatus('No links available', 'read-only');
+                        document.getElementById('refreshBtn').style.display = 'block';
                     }
                 } else {
                     throw new Error('Failed to load links');
@@ -532,6 +537,7 @@
                     document.getElementById('addForm').style.display = 'flex';
                 } else {
                     updateSyncStatus('View Mode (No links)', 'read-only');
+                    document.getElementById('refreshBtn').style.display = 'block';
                 }
                 renderLinks();
             }
@@ -571,7 +577,9 @@
                 if (response.ok) {
                     const data = await response.json();
                     fileSha = data.content.sha;
-                    updateSyncStatus('Admin Mode Active', 'synced');
+                    updateSyncStatus('Saved! Reloading...', 'syncing');
+                    // Reload links from GitHub after saving to ensure sync
+                    await loadLinksFromGitHub();
                 } else if (response.status === 401) {
                     throw new Error('Invalid token');
                 } else {
