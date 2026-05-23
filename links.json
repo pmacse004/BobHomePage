@@ -7,14 +7,6 @@
     {
       "name": "Tech Trainer",
       "url": "http://localhost:4100/"
-    },
-    {
-      "name": "test",
-      "url": "test.com"
-    },
-    {
-      "name": "gmail",
-      "url": "mail.google.com"
     }
   ]
 }
