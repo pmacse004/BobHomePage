@@ -1,8 +1,8 @@
 {
   "links": [
     {
-      "name": "Weather Forecast",
-      "url": "http://localhost:8080/"
+      "name": "Google",
+      "url": "https://www.google.com"
     }
   ]
 }
