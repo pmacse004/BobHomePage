@@ -369,7 +369,7 @@
         
         <h1 id="pageTitle" title="Triple-click for admin access">IBM Bob Projects</h1>
         
-        <div class="sync-status read-only" id="syncStatus">
+        <div class="sync-status read-only" id="syncStatus" onclick="manualRefresh()" style="cursor: pointer;" title="Click to refresh">
             🔄 Loading...
         </div>
         
@@ -471,13 +471,23 @@
             }
         }
         
+        // Manual refresh function
+        function manualRefresh() {
+            if (!isAdminMode) {
+                loadLinksFromGitHub();
+            }
+        }
+        
         // Load links from GitHub (PUBLIC READ - no token needed)
         async function loadLinksFromGitHub() {
             try {
                 updateSyncStatus('Loading links...', 'syncing');
                 
-                // Try public read first (works without token)
-                const response = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FILE}`);
+                // Try public read first (works without token) - add cache busting
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FILE}?t=${cacheBuster}`, {
+                    cache: 'no-cache'
+                });
                 
                 if (response.ok) {
                     const content = await response.json();
