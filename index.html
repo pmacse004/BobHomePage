@@ -559,11 +559,13 @@
                 updateSyncStatus('Saving...', 'syncing');
                 
                 // Get the latest SHA before saving to avoid conflicts
-                const shaResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}?ref=${GITHUB_BRANCH}`, {
+                const cacheBuster = new Date().getTime();
+                const shaResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}?ref=${GITHUB_BRANCH}&t=${cacheBuster}`, {
                     headers: {
                         'Authorization': `token ${githubToken}`,
                         'Accept': 'application/vnd.github.v3+json'
-                    }
+                    },
+                    cache: 'no-cache'
                 });
                 
                 if (shaResponse.ok) {
