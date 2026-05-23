@@ -515,8 +515,14 @@
                 renderLinks();
             } catch (error) {
                 console.error('Error loading links:', error);
-                updateSyncStatus('Error loading links', 'error');
+                // Fallback: show empty state but allow admin mode
                 links = [];
+                if (isAdminMode) {
+                    updateSyncStatus('Admin Mode (Offline)', 'synced');
+                    document.getElementById('addForm').style.display = 'flex';
+                } else {
+                    updateSyncStatus('View Mode (No links)', 'read-only');
+                }
                 renderLinks();
             }
         }
