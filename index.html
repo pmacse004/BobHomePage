@@ -36,7 +36,8 @@
         
         .sidebar.minimized h1,
         .sidebar.minimized .add-form,
-        .sidebar.minimized .link-list {
+        .sidebar.minimized .link-list,
+        .sidebar.minimized .sync-status {
             display: none;
         }
         
@@ -82,12 +83,42 @@
             color: #2d3748;
             font-size: 28px;
             font-weight: 700;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-align: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+        
+        .sync-status {
+            text-align: center;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .sync-status.synced {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .sync-status.syncing {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .sync-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .sync-status.no-token {
+            background: #d1ecf1;
+            color: #0c5460;
         }
         
         .add-form {
@@ -136,6 +167,12 @@
         
         button:active {
             transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .link-list {
@@ -264,10 +301,14 @@
         
         <h1>IBM Bob Projects</h1>
         
+        <div class="sync-status no-token" id="syncStatus" onclick="showTokenHelp()" title="Click for setup instructions">
+            ℹ️ Click to setup sync
+        </div>
+        
         <div class="add-form">
             <input type="text" id="linkName" placeholder="Enter link name..." />
             <input type="url" id="linkUrl" placeholder="https://example.com" />
-            <button onclick="addLink()">➕ Add Link</button>
+            <button onclick="addLink()" id="addBtn">➕ Add Link</button>
         </div>
         
         <ul class="link-list" id="linkList"></ul>
@@ -283,12 +324,147 @@
     </div>
 
     <script>
-        let links = JSON.parse(localStorage.getItem('ibmBobLinks') || '[]');
+        // Configuration
+        const GITHUB_REPO = 'pmacse004/BobHomePage';
+        const GITHUB_FILE = 'links.json';
+        const GITHUB_BRANCH = 'main';
+        
+        let links = [];
         let activeIndex = -1;
         let sidebarMinimized = false;
+        let fileSha = null;
+        let githubToken = localStorage.getItem('github_token');
         
-        function saveLinks() {
-            localStorage.setItem('ibmBobLinks', JSON.stringify(links));
+        // Show token setup help
+        function showTokenHelp() {
+            const hasToken = !!githubToken;
+            if (!hasToken) {
+                alert('🔐 GitHub Token Setup Required\n\n' +
+                      '1. Open browser console (F12)\n' +
+                      '2. Run: localStorage.setItem("github_token", "YOUR_TOKEN")\n' +
+                      '3. Get token from: https://github.com/settings/tokens\n\n' +
+                      'See GITHUB_TOKEN_SETUP.md for detailed instructions.');
+            } else {
+                const action = confirm('GitHub token is configured.\n\n' +
+                                     'Click OK to remove token\n' +
+                                     'Click Cancel to keep it');
+                if (action) {
+                    localStorage.removeItem('github_token');
+                    githubToken = null;
+                    alert('Token removed. Refresh page to use local storage only.');
+                }
+            }
+        }
+        
+        // Update sync status
+        function updateSyncStatus(message, type = 'syncing') {
+            const status = document.getElementById('syncStatus');
+            status.className = `sync-status ${type}`;
+            const icons = { synced: '✅', syncing: '🔄', error: '❌', 'no-token': 'ℹ️' };
+            status.textContent = `${icons[type]} ${message}`;
+        }
+        
+        // Load links from GitHub
+        async function loadLinksFromGitHub() {
+            if (!githubToken) {
+                updateSyncStatus('Click to setup sync', 'no-token');
+                links = JSON.parse(localStorage.getItem('ibmBobLinks') || '[]');
+                renderLinks();
+                return;
+            }
+            
+            try {
+                updateSyncStatus('Loading links...', 'syncing');
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}?ref=${GITHUB_BRANCH}`, {
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    fileSha = data.sha;
+                    const content = JSON.parse(atob(data.content));
+                    links = content.links || [];
+                    updateSyncStatus('Synced with GitHub', 'synced');
+                    localStorage.setItem('ibmBobLinks', JSON.stringify(links));
+                } else if (response.status === 404) {
+                    links = [];
+                    updateSyncStatus('Ready (no links yet)', 'synced');
+                } else if (response.status === 401) {
+                    throw new Error('Invalid token');
+                } else {
+                    throw new Error('Failed to load links');
+                }
+                renderLinks();
+            } catch (error) {
+                console.error('Error loading links:', error);
+                if (error.message === 'Invalid token') {
+                    updateSyncStatus('Invalid token - click to fix', 'error');
+                    localStorage.removeItem('github_token');
+                    githubToken = null;
+                } else {
+                    updateSyncStatus('Using local storage', 'error');
+                }
+                links = JSON.parse(localStorage.getItem('ibmBobLinks') || '[]');
+                renderLinks();
+            }
+        }
+        
+        // Save links to GitHub
+        async function saveLinksToGitHub() {
+            if (!githubToken) {
+                updateSyncStatus('Saved locally only', 'no-token');
+                localStorage.setItem('ibmBobLinks', JSON.stringify(links));
+                return;
+            }
+            
+            try {
+                updateSyncStatus('Saving...', 'syncing');
+                
+                const content = btoa(JSON.stringify({ links }, null, 2));
+                const body = {
+                    message: 'Update links',
+                    content: content,
+                    branch: GITHUB_BRANCH
+                };
+                
+                if (fileSha) {
+                    body.sha = fileSha;
+                }
+                
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    fileSha = data.content.sha;
+                    updateSyncStatus('Saved to GitHub', 'synced');
+                    localStorage.setItem('ibmBobLinks', JSON.stringify(links));
+                } else if (response.status === 401) {
+                    throw new Error('Invalid token');
+                } else {
+                    throw new Error('Failed to save links');
+                }
+            } catch (error) {
+                console.error('Error saving links:', error);
+                if (error.message === 'Invalid token') {
+                    updateSyncStatus('Invalid token - click to fix', 'error');
+                    localStorage.removeItem('github_token');
+                    githubToken = null;
+                } else {
+                    updateSyncStatus('Saved locally only', 'error');
+                }
+                localStorage.setItem('ibmBobLinks', JSON.stringify(links));
+            }
         }
         
         function toggleSidebar() {
@@ -312,11 +488,17 @@
             } else {
                 list.innerHTML = links.map((link, index) => `
                     <li class="link-item ${index === activeIndex ? 'active' : ''}" onclick="loadLink(${index})">
-                        <div class="link-name">${link.name}</div>
+                        <div class="link-name">${escapeHtml(link.name)}</div>
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteLink(${index})">🗑️</button>
                     </li>
                 `).join('');
             }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         function loadLink(index) {
@@ -327,25 +509,28 @@
             renderLinks();
         }
         
-        function addLink() {
+        async function addLink() {
             const name = document.getElementById('linkName').value.trim();
             const url = document.getElementById('linkUrl').value.trim();
+            const addBtn = document.getElementById('addBtn');
             
             if (name && url) {
+                addBtn.disabled = true;
                 links.push({ name, url });
-                saveLinks();
+                await saveLinksToGitHub();
                 renderLinks();
                 document.getElementById('linkName').value = '';
                 document.getElementById('linkUrl').value = '';
+                addBtn.disabled = false;
             } else {
                 alert('⚠️ Please enter both name and URL');
             }
         }
         
-        function deleteLink(index) {
+        async function deleteLink(index) {
             if (confirm('🗑️ Delete this link?')) {
                 links.splice(index, 1);
-                saveLinks();
+                await saveLinksToGitHub();
                 if (activeIndex === index) {
                     activeIndex = -1;
                     document.getElementById('content').innerHTML = `
@@ -371,7 +556,13 @@
             if (e.key === 'Enter') addLink();
         });
         
-        renderLinks();
+        // Load links on page load
+        loadLinksFromGitHub();
+        
+        // Refresh links every 30 seconds to stay in sync (only if token is set)
+        if (githubToken) {
+            setInterval(loadLinksFromGitHub, 30000);
+        }
     </script>
 </body>
 </html>
