@@ -3,6 +3,10 @@
     {
       "name": "Weather Forecast",
       "url": "http://localhost:8080/"
+    },
+    {
+      "name": "Tech Trainer",
+      "url": "http://localhost:4100/"
     }
   ]
 }
