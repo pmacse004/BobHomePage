@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IBM Bob Projects</title>
+    <title>My IBM Bob Projects</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -61,8 +61,7 @@
             transition: all 0.3s ease;
         }
         
-        .sidebar.minimized + .content .toggle-btn,
-        .sidebar.minimized .toggle-btn {
+        .toggle-btn.minimized {
             left: 15px;
         }
         
@@ -81,9 +80,9 @@
         
         h1 {
             color: #2d3748;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
@@ -93,41 +92,11 @@
             user-select: none;
         }
         
-        .sync-status {
-            text-align: center;
-            padding: 8px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            font-size: 20px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .sync-status.synced {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .sync-status.syncing {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .sync-status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .sync-status.read-only {
-            background: #e7f3ff;
-            color: #004085;
-        }
-        
         .add-form {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-top: auto;
             padding: 20px;
             background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
             border-radius: 12px;
@@ -185,37 +154,36 @@
         .link-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 15px;
-            margin-bottom: 12px;
+            justify-content: space-between;
+            padding: 20px;
+            margin-bottom: 15px;
             background: white;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            min-height: 70px;
         }
         
         .link-item:hover {
             border-color: #667eea;
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
         }
         
         .link-item.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-color: transparent;
-        }
-        
-        .link-icon {
-            font-size: 20px;
-            min-width: 24px;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
         }
         
         .link-name {
             flex: 1;
-            font-weight: 500;
-            font-size: 15px;
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.3px;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         
         .delete-btn {
@@ -349,29 +317,25 @@
 </head>
 <body>
     <div class="sidebar" id="sidebar">
-        <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+        <button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Toggle Sidebar">
             <span id="toggleIcon">◀</span>
         </button>
         
-        <h1 id="pageTitle" title="Triple-click for admin access">IBM Bob Projects</h1>
+        <h1 id="pageTitle" title="Triple-click for admin access">My IBM Bob Projects</h1>
         
-        <div class="sync-status read-only" id="syncStatus" onclick="handleStatusClick()" title="Click to refresh">
-            🔄 Loading...
-        </div>
+        <ul class="link-list" id="linkList"></ul>
         
         <div class="add-form" id="addForm" style="display: none;">
             <input type="text" id="linkName" placeholder="Enter link name..." />
             <input type="url" id="linkUrl" placeholder="https://example.com" />
             <button onclick="addLink()" id="addBtn">➕ Add Link</button>
         </div>
-        
-        <ul class="link-list" id="linkList"></ul>
     </div>
     
     <div class="content" id="content">
         <div class="welcome-screen">
             <div class="welcome-content">
-                <h2>Welcome to IBM Bob Projects</h2>
+                <h2>Welcome to My IBM Bob Projects</h2>
                 <p>Select a project from the sidebar to get started</p>
             </div>
         </div>
@@ -425,14 +389,11 @@
         auth.onAuthStateChanged((user) => {
             if (user) {
                 isAdminMode = true;
-                updateSyncStatus('', 'synced');
                 document.getElementById('addForm').style.display = 'flex';
             } else {
                 isAdminMode = false;
-                updateSyncStatus('', 'read-only');
                 document.getElementById('addForm').style.display = 'none';
             }
-            loadLinks();
         });
         
         // Listen for real-time updates
@@ -471,13 +432,11 @@
             }
             
             try {
-                updateSyncStatus('Logging in...', 'syncing');
                 await auth.signInWithEmailAndPassword(email, password);
                 closeAdminModal();
                 alert('✅ Admin mode enabled!');
             } catch (error) {
                 console.error('Login error:', error);
-                updateSyncStatus('', 'read-only');
                 alert('❌ Login failed: ' + error.message);
             }
         }
@@ -494,35 +453,6 @@
             }
         }
         
-        // Update sync status
-        function updateSyncStatus(message, type = 'syncing') {
-            const status = document.getElementById('syncStatus');
-            status.className = `sync-status ${type}`;
-            const icons = { synced: '✏️', syncing: '🔄', error: '❌', 'read-only': '👁️' };
-            status.textContent = `${icons[type]}`;
-            status.title = isAdminMode ? 'Admin Mode - Click to logout' : 'View Mode - Click to refresh';
-            status.style.cursor = 'pointer';
-        }
-        
-        function handleStatusClick() {
-            if (isAdminMode) {
-                disableAdminMode();
-            } else {
-                loadLinks();
-            }
-        }
-        
-        // Load links
-        function loadLinks() {
-            // Firebase real-time listener handles this automatically
-            // This function is kept for manual refresh in view mode
-            if (!isAdminMode) {
-                updateSyncStatus('Refreshing...', 'syncing');
-                setTimeout(() => {
-                    updateSyncStatus('', 'read-only');
-                }, 500);
-            }
-        }
         
         // Add link
         async function addLink() {
@@ -540,7 +470,6 @@
             }
             
             try {
-                updateSyncStatus('Adding...', 'syncing');
                 await linksRef.push({
                     name: name,
                     url: url,
@@ -549,10 +478,8 @@
                 
                 document.getElementById('linkName').value = '';
                 document.getElementById('linkUrl').value = '';
-                updateSyncStatus('', 'synced');
             } catch (error) {
                 console.error('Error adding link:', error);
-                updateSyncStatus('Error', 'error');
                 alert('❌ Failed to add link: ' + error.message);
             }
         }
@@ -566,12 +493,9 @@
             
             if (confirm(`Delete "${name}"?`)) {
                 try {
-                    updateSyncStatus('Deleting...', 'syncing');
                     await linksRef.child(id).remove();
-                    updateSyncStatus('', 'synced');
                 } catch (error) {
                     console.error('Error deleting link:', error);
-                    updateSyncStatus('Error', 'error');
                     alert('❌ Failed to delete link: ' + error.message);
                 }
             }
@@ -587,11 +511,10 @@
             }
             
             list.innerHTML = links.map((link, index) => `
-                <li class="link-item ${index === activeIndex ? 'active' : ''}" 
+                <li class="link-item ${index === activeIndex ? 'active' : ''}"
                     onclick="openLink(${index}, '${link.url.replace(/'/g, "\\'")}')">
-                    <span class="link-icon">🔗</span>
                     <span class="link-name">${link.name}</span>
-                    ${isAdminMode ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteLink('${link.id}', '${link.name.replace(/'/g, "\\'")}')">🗑️ Delete</button>` : ''}
+                    ${isAdminMode ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteLink('${link.id}', '${link.name.replace(/'/g, "\\'")}')">🗑️</button>` : ''}
                 </li>
             `).join('');
         }
@@ -608,14 +531,17 @@
         // Toggle sidebar
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleBtn');
             const icon = document.getElementById('toggleIcon');
             sidebarMinimized = !sidebarMinimized;
             
             if (sidebarMinimized) {
                 sidebar.classList.add('minimized');
+                toggleBtn.classList.add('minimized');
                 icon.textContent = '▶';
             } else {
                 sidebar.classList.remove('minimized');
+                toggleBtn.classList.remove('minimized');
                 icon.textContent = '◀';
             }
         }
