@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        // Redirect to index.html while preserving the path
+        // This allows single-page app routing to work on GitHub Pages
+        sessionStorage.setItem('redirect', location.pathname);
+        location.replace(location.origin + '/');
+    </script>
+</head>
+<body>
+</body>
+</html>

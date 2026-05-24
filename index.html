@@ -441,6 +441,12 @@
             
             // Load link from URL if present (only on first load)
             if (!window.linksLoaded) {
+                // Check if redirected from 404.html
+                const redirect = sessionStorage.getItem('redirect');
+                if (redirect) {
+                    sessionStorage.removeItem('redirect');
+                    history.replaceState(null, '', redirect);
+                }
                 loadLinkFromUrl();
                 window.linksLoaded = true;
             }
