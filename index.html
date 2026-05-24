@@ -54,11 +54,11 @@
             font-size: 20px;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
+            z-index: 2000;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: left 0.3s ease;
         }
         
         .toggle-btn.minimized {
@@ -434,7 +434,6 @@
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 closeAdminModal();
-                alert('✅ Admin mode enabled!');
             } catch (error) {
                 console.error('Login error:', error);
                 alert('❌ Login failed: ' + error.message);
@@ -445,7 +444,6 @@
             if (confirm('Logout from admin mode?')) {
                 try {
                     await auth.signOut();
-                    alert('✅ Logged out successfully');
                 } catch (error) {
                     console.error('Logout error:', error);
                     alert('❌ Logout failed');
