@@ -154,48 +154,75 @@
         .link-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             padding: 25px;
             margin-bottom: 15px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid #dee2e6;
-            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-height: 80px;
+            min-height: 100px;
             aspect-ratio: 1;
             width: 100%;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .link-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .link-item:hover::before {
+            opacity: 1;
         }
         
         .link-item:hover {
-            border-color: #667eea;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
         }
         
         .link-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+            transform: scale(1.05);
         }
         
         .link-name {
             flex: 1;
-            font-weight: 600;
-            font-size: 16px;
-            letter-spacing: 0.3px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 0.5px;
             font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: white;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            line-height: 1.4;
+            z-index: 1;
         }
         
         .delete-btn {
-            padding: 6px 12px;
-            background: #ef4444;
-            font-size: 12px;
-            box-shadow: none;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 8px;
+            background: rgba(239, 68, 68, 0.9);
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
+            z-index: 2;
+            min-width: auto;
         }
         
         .link-item:hover .delete-btn {
@@ -203,8 +230,8 @@
         }
         
         .delete-btn:hover {
-            background: #dc2626;
-            transform: none;
+            background: rgba(220, 38, 38, 1);
+            transform: scale(1.1);
         }
         
         .empty-state {
