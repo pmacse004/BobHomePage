@@ -438,6 +438,12 @@
                 links = [];
             }
             renderLinks();
+            
+            // Load link from URL if present (only on first load)
+            if (!window.linksLoaded) {
+                loadLinkFromUrl();
+                window.linksLoaded = true;
+            }
         });
         
         // Modal functions
@@ -548,12 +554,53 @@
         }
         
         // Open link in iframe
-        function openLink(index, url) {
+        function openLink(index, url, updateUrl = true) {
             activeIndex = index;
             renderLinks();
             
             const content = document.getElementById('content');
             content.innerHTML = `<iframe src="${url}" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>`;
+            
+            // Update URL without reloading page
+            if (updateUrl && links[index]) {
+                const linkName = links[index].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                history.pushState({ index, url }, '', `/${linkName}`);
+            }
+        }
+        
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.index !== undefined) {
+                openLink(event.state.index, event.state.url, false);
+            } else {
+                // Back to home
+                activeIndex = -1;
+                renderLinks();
+                document.getElementById('content').innerHTML = `
+                    <div class="welcome-screen">
+                        <div class="welcome-content">
+                            <h2>Welcome to My IBM Bob Projects</h2>
+                            <p>Select a project from the sidebar to get started</p>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        // Load link from URL on page load
+        function loadLinkFromUrl() {
+            const path = window.location.pathname;
+            if (path && path !== '/' && links.length > 0) {
+                const linkName = path.substring(1); // Remove leading slash
+                const index = links.findIndex(link => {
+                    const normalizedName = link.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                    return normalizedName === linkName;
+                });
+                
+                if (index !== -1) {
+                    openLink(index, links[index].url, false);
+                }
+            }
         }
         
         // Toggle sidebar
