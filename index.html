@@ -155,27 +155,30 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 15px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-height: 70px;
+            min-height: 80px;
+            aspect-ratio: 1;
+            width: 100%;
         }
         
         .link-item:hover {
             border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
         }
         
         .link-item.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-color: transparent;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
         }
         
         .link-name {
@@ -316,11 +319,11 @@
     </style>
 </head>
 <body>
+    <button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Toggle Sidebar">
+        <span id="toggleIcon">◀</span>
+    </button>
+    
     <div class="sidebar" id="sidebar">
-        <button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Toggle Sidebar">
-            <span id="toggleIcon">◀</span>
-        </button>
-        
         <h1 id="pageTitle" title="Triple-click for admin access">My IBM Bob Projects</h1>
         
         <ul class="link-list" id="linkList"></ul>
