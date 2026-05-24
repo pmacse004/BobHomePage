@@ -441,12 +441,23 @@
             
             // Load link from URL if present (only on first load)
             if (!window.linksLoaded) {
-                // Check if redirected from 404.html
+                // Check if redirected from 404.html via query parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectPath = urlParams.get('redirect');
+                if (redirectPath) {
+                    // Replace URL to remove query parameter and show the actual path
+                    history.replaceState(null, '', redirectPath);
+                }
+                
+                // Also check sessionStorage as fallback
                 const redirect = sessionStorage.getItem('redirect');
                 if (redirect) {
                     sessionStorage.removeItem('redirect');
-                    history.replaceState(null, '', redirect);
+                    if (!redirectPath) {
+                        history.replaceState(null, '', redirect);
+                    }
                 }
+                
                 loadLinkFromUrl();
                 window.linksLoaded = true;
             }
@@ -560,7 +571,7 @@
         }
         
         // Open link in iframe
-        function openLink(index, url, updateUrl = true) {
+        function openLink(index, url, updateUrl = true, closeSidebar = false) {
             activeIndex = index;
             renderLinks();
             
@@ -571,6 +582,11 @@
             if (updateUrl && links[index]) {
                 const linkName = links[index].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
                 history.pushState({ index, url }, '', `/${linkName}`);
+            }
+            
+            // Close sidebar if requested (for direct links)
+            if (closeSidebar && !sidebarMinimized) {
+                toggleSidebar();
             }
         }
         
@@ -604,7 +620,8 @@
                 });
                 
                 if (index !== -1) {
-                    openLink(index, links[index].url, false);
+                    // Open link and close sidebar for direct access
+                    openLink(index, links[index].url, false, true);
                 }
             }
         }

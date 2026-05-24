@@ -6,7 +6,7 @@
         // Redirect to index.html while preserving the path
         // This allows single-page app routing to work on GitHub Pages
         sessionStorage.setItem('redirect', location.pathname);
-        location.replace(location.origin + '/');
+        location.replace(location.origin + '/?redirect=' + encodeURIComponent(location.pathname));
     </script>
 </head>
 <body>
